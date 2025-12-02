@@ -797,17 +797,4 @@ If you found this project helpful, please consider:
 
 </div>
 <<<<<<< HEAD
-#   S m a r t - S u m m a r y - Q - A 
- 
- #   S m a r t - S u m m a r y - Q - A 
- 
- #   S m a r t - S u m m a r y - Q - A 
- 
- #   S m a r t - S u m m a r y - Q - A 
- 
- #   s m a r t - s u m m a r y 
- 
- 
-=======
 #
->>>>>>> 7b8ffe29ca744b8d45310c3be6d656e169ccc200
