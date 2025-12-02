@@ -796,9 +796,4 @@ If you found this project helpful, please consider:
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/rishith-kumar-pachipulusu-2748b4380/)
 
 </div>
-#   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   s m a r t - s u m m a r y  
- 
+#
