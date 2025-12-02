@@ -23,8 +23,8 @@ The project integrates **OpenAI's Whisper AI** for audio transcription, **Xenova
 | Service | URL | Status |
 |---------|-----|--------|
 | **Frontend** | [https://smart-summary-q-a.vercel.app/](https://smart-summary-q-a.vercel.app/) | 🟢 Active |
-| **Backend API** | [https://smart-summary-q-a-backend.onrender.com](https://smart-summary-q-a-backend.onrender.com) | 🟢 Active |
-| **API Health** | [https://smart-summary-q-a-backend.onrender.com/api/health](https://smart-summary-q-a-backend.onrender.com/api/health) | 🟢 Active |
+| **Backend API** | [https://smart-summary-q-a.onrender.com](https://smart-summary-q-a.onrender.com) | 🟢 Active |
+| **API Health** | [https://smart-summary-q-a.onrender.com/api/health](https://smart-summary-q-a.onrender.com/api/health) | 🟢 Active |
 
 ---
 
@@ -426,7 +426,7 @@ REACT_APP_GA_ID=your_google_analytics_id
 
 For **Vercel** (Frontend):
 ```
-REACT_APP_API_URL=https://smart-summary-q-a-backend.onrender.com
+REACT_APP_API_URL=https://smart-summary-q-a.onrender.com
 REACT_APP_ENABLE_DEBUG=false
 ```
 
@@ -443,7 +443,7 @@ PORT=5001
 
 ### Base URL
 - **Local**: `http://localhost:5001/api`
-- **Production**: `https://smart-summary-q-a-backend.onrender.com/api`
+- **Production**: `https://smart-summary-q-a.onrender.com/api`
 
 ### 1. Process Single Video
 
@@ -796,9 +796,14 @@ If you found this project helpful, please consider:
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://www.linkedin.com/in/rishith-kumar-pachipulusu-2748b4380/)
 
 </div>
-#   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   S m a r t - S u m m a r y - Q - A  
- #   s m a r t - s u m m a r y  
+#   S m a r t - S u m m a r y - Q - A 
+ 
+ #   S m a r t - S u m m a r y - Q - A 
+ 
+ #   S m a r t - S u m m a r y - Q - A 
+ 
+ #   S m a r t - S u m m a r y - Q - A 
+ 
+ #   s m a r t - s u m m a r y 
+ 
  

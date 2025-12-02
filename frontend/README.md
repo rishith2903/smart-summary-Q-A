@@ -362,7 +362,7 @@ REACT_APP_ENABLE_DEBUG=true
 
 **Production** (`.env.production`):
 ```env
-REACT_APP_API_URL=https://smart-summary-q-a-backend.onrender.com
+REACT_APP_API_URL=https://smart-summary-q-a.onrender.com
 REACT_APP_ENABLE_DEBUG=false
 REACT_APP_LOG_LEVEL=error
 ```

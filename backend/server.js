@@ -25,8 +25,8 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://smart-summary-q-a-backend.onrender.com',
-      'https://rishith2903.github.io',
+      'https://smart-summary-q-a.onrender.com',
+      'https://smart-summary-q-a.vercel.app',
       process.env.FRONTEND_URL
     ].filter(Boolean);
 
@@ -71,7 +71,7 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-  
+
   res.status(err.status || 500).json({
     success: false,
     error: {

@@ -3,7 +3,7 @@
 
 [![Node.js](https://img.shields.io/badge/Node.js-16+-339933?logo=node.js)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.21-000000?logo=express)](https://expressjs.com/)
-[![Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://smart-summary-q-a-backend.onrender.com)
+[![Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://smart-summary-q-a.onrender.com)
 [![License](https://img.shields.io/badge/license-MIT-green)](../LICENSE)
 
 ---
@@ -20,13 +20,13 @@ The backend's **data management strategy** focuses on efficient temporary storag
 
 ## 🌐 Live API & Deployment
 
-**Production API**: [https://smart-summary-q-a-backend.onrender.com](https://smart-summary-q-a-backend.onrender.com)
+**Production API**: [https://smart-summary-q-a.onrender.com](https://smart-summary-q-a.onrender.com)
 
 **Local Development**: `http://localhost:5001`
 
-**API Documentation**: [https://smart-summary-q-a-backend.onrender.com](https://smart-summary-q-a-backend.onrender.com) *(Endpoints listed at root)*
+**API Documentation**: [https://smart-summary-q-a.onrender.com](https://smart-summary-q-a.onrender.com) *(Endpoints listed at root)*
 
-**Health Check**: [https://smart-summary-q-a-backend.onrender.com/api/health](https://smart-summary-q-a-backend.onrender.com/api/health)
+**Health Check**: [https://smart-summary-q-a.onrender.com/api/health](https://smart-summary-q-a.onrender.com/api/health)
 
 **Swagger/OpenAPI Docs**: *(Coming Soon)*
 
@@ -525,7 +525,7 @@ USE_GPU=false
 
 ### Base URL
 - **Local**: `http://localhost:5001/api`
-- **Production**: `https://smart-summary-q-a-backend.onrender.com/api`
+- **Production**: `https://smart-summary-q-a.onrender.com/api`
 
 ### Standard Response Format
 
@@ -1143,7 +1143,7 @@ docker run -p 5001:5001 --env-file .env smart-summary-backend
 
 ```bash
 # Check API health
-curl https://smart-summary-q-a-backend.onrender.com/api/health
+curl https://smart-summary-q-a.onrender.com/api/health
 
 # Response
 {
