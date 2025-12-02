@@ -1,0 +1,229 @@
+/* Global Styles */
+* {
+  box-sizing: border-box;
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, #f1f1f1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #c1c1c1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, #a8a8a8);
+}
+
+/* Dark mode scrollbar */
+[data-theme="dark"] {
+  --scrollbar-track: #2d2d2d;
+  --scrollbar-thumb: #555;
+  --scrollbar-thumb-hover: #777;
+}
+
+/* Light mode scrollbar */
+[data-theme="light"] {
+  --scrollbar-track: #f1f1f1;
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #a8a8a8;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Utility classes */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.6s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Custom gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-secondary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Custom card hover effects */
+.hover-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-hover-shadow, 0 8px 25px rgba(0, 0, 0, 0.15));
+}
+
+/* Dark mode card hover */
+[data-theme="dark"] {
+  --card-hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Light mode card hover */
+[data-theme="light"] {
+  --card-hover-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Feature Cards - Video Processing and Document Intelligence */
+.feature-card {
+  background-color: #ffffff;
+  color: #000000;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode for feature cards */
+[data-theme="dark"] .feature-card {
+  background-color: rgb(30, 30, 30) !important;
+  color: #ffffff !important;
+}
+
+/* CSS media query fallback for dark mode */
+@media (prefers-color-scheme: dark) {
+  .feature-card {
+    background-color: rgb(30, 30, 30);
+    color: #ffffff;
+  }
+}
+
+/* Light mode override when explicitly set */
+[data-theme="light"] .feature-card {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Dark mode card content fix */
+[data-theme="dark"] .MuiCardContent-root {
+  background-color: rgb(30, 30, 30) !important;
+  color: #ffffff !important;
+}
+
+/* Optional specific override */
+[data-theme="dark"] .css-1dnf0tf {
+  background-color: #303030 !important;
+}
+
+/* Text selection */
+::selection {
+  background-color: rgba(102, 126, 234, 0.3);
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(102, 126, 234, 0.3);
+  color: inherit;
+}
+
+/* Focus styles */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .mobile-hidden {
+    display: none !important;
+  }
+
+  .mobile-full-width {
+    width: 100% !important;
+  }
+}
+
+/* Dark mode card content fix */
+[data-theme="dark"] .MuiCardContent-root {
+  background-color: #303030 !important;
+  color: #ffffff !important;
+}
+
+/* Target the specific class if needed */
+[data-theme="dark"] .css-1dnf0tf {
+  background-color: #303030 !important;
+}
+
+
+
