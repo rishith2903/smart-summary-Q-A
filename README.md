@@ -90,11 +90,13 @@ The project integrates **OpenAI's Whisper AI** for audio transcription, **Xenova
   - Real-time processing updates
   - Progress indicators
 
-- **🔄 Robust Fallback System**
-  - Multiple transcription methods
-  - Automatic error recovery
-  - 100% uptime guarantee
-  - Comprehensive error handling
+- **🔄 5-Level Fallback Transcription System**
+  - Level 1: youtube-transcript npm (instant)
+  - Level 2: YouTube Innertube API (instant)
+  - Level 3: Web Scraping/Caption Tracks (instant)
+  - Level 4: Deepgram Speech-to-Text API (~30s)
+  - Level 5: Local Whisper AI (@xenova/transformers)
+  - Works for ALL videos - with or without captions!
 
 ---
 
@@ -119,13 +121,13 @@ The project integrates **OpenAI's Whisper AI** for audio transcription, **Xenova
 - Session-based content management
 - Efficient caching system
 
-### **AI/ML**
-- **Whisper AI** (via node-whisper 2024.11.13) - Audio transcription
-- **Xenova Transformers** 2.17.2 - NLP and text processing
-- **YouTube Transcript API** 1.2.1 - Transcript extraction
-- **Sentence Transformers** - Semantic search and embeddings
-- **PyTorch** 2.0.0+ - Deep learning backend
-- **Faster Whisper** 0.10.0 - Optimized transcription
+### **AI/ML & Transcription**
+- **Xenova Transformers** 2.17.2 - Local Whisper AI & NLP
+- **Deepgram API** - Speech-to-Text (5 hrs/month free)
+- **YouTube Transcript API** 1.2.1 - Caption extraction
+- **YouTube Innertube API** - Direct caption access
+- **Web Scraping** - Fallback caption extraction
+- **ytdl-core** 4.11.5 - Audio download for transcription
 
 ### **DevOps & Tools**
 - **Vercel** - Frontend deployment
@@ -170,16 +172,19 @@ The project integrates **OpenAI's Whisper AI** for audio transcription, **Xenova
        │                │                │
        ▼                ▼                ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-│  YouTube     │ │  PDF Parse   │ │  Transformers│
-│  Transcript  │ │  (PyMuPDF)   │ │  (Xenova)    │
-│  API         │ └──────────────┘ └──────────────┘
-└──────┬───────┘
-       │
-       ▼
-┌──────────────┐
-│  Whisper AI  │
-│  Fallback    │
-└──────────────┘
+│  Transcription Service         │ │  PDF Parse   │ │  Transformers│
+│  (5-Level Fallback)            │ │  (pdf-parse) │ │  (Xenova)    │
+└────────────┬───────────────────┘ └──────────────┘ └──────────────┘
+             │
+    ┌────────┴────────┬─────────────┬──────────────┬────────────────┐
+    ▼                 ▼             ▼              ▼                ▼
+┌──────────┐ ┌──────────────┐ ┌──────────┐ ┌──────────────┐ ┌──────────────┐
+│ youtube  │ │  Innertube   │ │   Web    │ │   Deepgram   │ │ Local Whisper│
+│-transcript│ │    API      │ │ Scraping │ │     API      │ │   (Xenova)   │
+│   npm    │ │             │ │          │ │              │ │              │
+└──────────┘ └──────────────┘ └──────────┘ └──────────────┘ └──────────────┘
+   Level 1        Level 2       Level 3       Level 4          Level 5
+   (instant)      (instant)     (instant)      (~30s)          (1-3 min)
 ```
 
 **Data Flow:**
@@ -376,26 +381,17 @@ MAX_FILE_SIZE=10485760
 # AI/ML Configuration
 USE_GPU=false
 DEFAULT_LANGUAGE=en
-WHISPER_MODEL=base
 
-# Transcription Methods
-ENABLE_METHOD_1=true
-ENABLE_METHOD_2=true
-FALLBACK_ENABLED=true
+# Transcription API Keys (for videos WITHOUT captions)
+# Get free Deepgram key at: https://deepgram.com (5 hours/month free)
+DEEPGRAM_API_KEY=your_deepgram_api_key_here
 
 # Logging
 LOG_LEVEL=info
-VERBOSE_LOGS=false
-
-# API Rate Limiting
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX_REQUESTS=100
 
 # File Upload
 UPLOAD_DIR=./uploads
 TEMP_DIR=./temp
-AUTO_CLEANUP=true
-CLEANUP_INTERVAL=3600
 ```
 
 ### Frontend Environment (.env)
@@ -562,22 +558,80 @@ file: [PDF file]
 
 ### Data Sources
 
-This project **does not use custom datasets** for training. Instead, it leverages **pre-trained models** from the following sources:
+This project **does not use custom datasets** for training. Instead, it leverages **pre-trained models** and **multiple APIs** for transcription:
 
-1. **Whisper AI by OpenAI**
-   - Pre-trained on 680,000 hours of multilingual audio
-   - Supports 99+ languages
-   - Models: tiny, base, small, medium, large
+1. **YouTube Captions (Levels 1-3)**
+   - youtube-transcript npm package
+   - YouTube Innertube API
+   - Web scraping for caption tracks
+   - Works for videos WITH captions enabled
 
-2. **Xenova Transformers**
+2. **Deepgram Speech-to-Text API (Level 4)**
+   - Cloud-based speech recognition
+   - 5 hours FREE per month
+   - Works for videos WITHOUT captions
+   - ~30 seconds processing time
+
+3. **@xenova/transformers - Local Whisper (Level 5)**
+   - Runs Whisper AI locally in Node.js
+   - No API key required
+   - Works for ALL videos
+   - 1-3 minutes processing time
+
+4. **Xenova Transformers (NLP)**
    - Pre-trained on massive text corpora
    - BERT, RoBERTa, T5 architectures
    - Fine-tuned for summarization and Q&A tasks
 
-3. **YouTube Transcript API**
-   - Real-time transcript extraction
-   - Auto-generated and manual captions
-   - Multiple language support
+### 5-Level Transcription Fallback System
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRANSCRIPTION FLOW                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  YouTube URL Input                                              │
+│         │                                                       │
+│         ▼                                                       │
+│  ┌─────────────────┐    ✓ Success                              │
+│  │ Level 1: youtube│──────────────► Return Transcript          │
+│  │ -transcript npm │                                            │
+│  └────────┬────────┘                                           │
+│           │ ✗ Fail                                              │
+│           ▼                                                     │
+│  ┌─────────────────┐    ✓ Success                              │
+│  │ Level 2:        │──────────────► Return Transcript          │
+│  │ Innertube API   │                                            │
+│  └────────┬────────┘                                           │
+│           │ ✗ Fail                                              │
+│           ▼                                                     │
+│  ┌─────────────────┐    ✓ Success                              │
+│  │ Level 3: Web    │──────────────► Return Transcript          │
+│  │ Scraping        │                                            │
+│  └────────┬────────┘                                           │
+│           │ ✗ Fail (No captions on video)                      │
+│           ▼                                                     │
+│  ┌─────────────────┐    ✓ Success                              │
+│  │ Level 4:        │──────────────► Return Transcript          │
+│  │ Deepgram API    │   (Requires DEEPGRAM_API_KEY)             │
+│  └────────┬────────┘                                           │
+│           │ ✗ Fail or No API Key                               │
+│           ▼                                                     │
+│  ┌─────────────────┐    ✓ Success                              │
+│  │ Level 5: Local  │──────────────► Return Transcript          │
+│  │ Whisper (Xenova)│   (Slowest, but always works)             │
+│  └─────────────────┘                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Level | Method | Speed | Cost | Works For |
+|-------|--------|-------|------|-----------|
+| 1 | youtube-transcript npm | ⚡ Instant | Free | Videos WITH captions |
+| 2 | YouTube Innertube API | ⚡ Instant | Free | Videos WITH captions |
+| 3 | Web Scraping | ⚡ Instant | Free | Videos WITH captions |
+| 4 | Deepgram API | 🚀 ~30s | Free (5 hrs/mo) | ALL videos |
+| 5 | Local Whisper | 🐢 1-3 min | Free | ALL videos |
 
 ### Data Processing Pipeline
 
