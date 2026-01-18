@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Base API configuration - Support both Vite and Create React App
 const API_BASE_URL = import.meta.env?.VITE_API_URL ||
-                     process.env.REACT_APP_API_URL ||
-                     'http://localhost:5001';
+  process.env.REACT_APP_API_URL ||
+  'http://localhost:5001';
 
 // Debug logging
 console.log('🔧 API Configuration:', {
@@ -16,7 +16,7 @@ console.log('🔧 API Configuration:', {
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 60000, // 60 seconds timeout
+  timeout: 120000, // 120 seconds timeout (handles Render cold starts)
   headers: {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -89,7 +89,7 @@ export const healthAPI = {
       throw error;
     }
   },
-  
+
   getAPIInfo: async () => {
     const response = await api.get('/');
     return response.data;
@@ -102,7 +102,7 @@ export const videoAPI = {
     const response = await api.post('/api/video/info', { url });
     return response.data;
   },
-  
+
   processVideo: async (url, targetLanguage = 'en', useGpu = false) => {
     // Create unique endpoint URL to bypass any caching
     const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
@@ -139,7 +139,7 @@ export const videoAPI = {
 
     return response.data;
   },
-  
+
   processBatchVideos: async (urls, targetLanguage = 'en', useGpu = false, maxWorkers = 4) => {
     const requestData = {
       urls,
@@ -178,7 +178,7 @@ export const qaAPI = {
     });
     return response.data;
   },
-  
+
   getQuestionSuggestions: async (summary) => {
     const response = await api.post('/api/qa/suggestions', { summary });
     return response.data;
@@ -190,7 +190,7 @@ export const pdfAPI = {
   processPDF: async (file) => {
     const formData = new FormData();
     formData.append('pdf', file);
-    
+
     const response = await api.post('/api/pdf/process', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -198,7 +198,7 @@ export const pdfAPI = {
     });
     return response.data;
   },
-  
+
   askPDFQuestion: async (pdfText, question, targetLanguage = 'en') => {
     const response = await api.post('/api/pdf/ask', {
       pdfText,
@@ -215,24 +215,24 @@ export const apiUtils = {
     const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
     return youtubeRegex.test(url);
   },
-  
+
   extractVideoId: (url) => {
     const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/;
     const match = url.match(regex);
     return match ? match[1] : null;
   },
-  
+
   formatDuration: (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-    
+
     if (hours > 0) {
       return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   },
-  
+
   formatFileSize: (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -240,7 +240,7 @@ export const apiUtils = {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   },
-  
+
   truncateText: (text, maxLength = 100) => {
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
