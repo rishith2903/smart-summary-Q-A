@@ -3,7 +3,6 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
 
 // Simple logger
 const logger = {
@@ -15,28 +14,11 @@ const logger = {
 class TranscriptionService {
   constructor() {
     this.transcriptCache = new Map();
-    this.transformers = null;
-    this.whisperPipeline = null;
     this.tempDir = path.join(__dirname, '../temp');
 
     // Ensure temp directory exists
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir, { recursive: true });
-    }
-  }
-
-  // Initialize @xenova/transformers lazily
-  async initializeTransformers() {
-    if (this.transformers) return true;
-
-    try {
-      logger.info('🔧 Initializing @xenova/transformers...');
-      this.transformers = await import('@xenova/transformers');
-      logger.info('✅ @xenova/transformers loaded successfully');
-      return true;
-    } catch (error) {
-      logger.warn(`⚠️ Failed to load @xenova/transformers: ${error.message}`);
-      return false;
     }
   }
 
@@ -55,7 +37,7 @@ class TranscriptionService {
       }
 
       logger.info(`🎬 Getting transcript for video: ${videoId}`);
-      logger.info('📋 Fallback order: youtube-transcript → Innertube API → Caption Track → Web Scraping → Deepgram → Local Whisper');
+      logger.info('📋 Fallback order: youtube-transcript → Innertube API → Web Scraping → Deepgram URL API');
 
       // ============================================
       // LEVEL 1: youtube-transcript npm package
@@ -103,13 +85,13 @@ class TranscriptionService {
       }
 
       // ============================================
-      // LEVEL 4: Deepgram API (for videos WITHOUT captions)
+      // LEVEL 4: Deepgram API with direct URL transcription
       // ============================================
       const deepgramApiKey = process.env.DEEPGRAM_API_KEY;
       if (deepgramApiKey) {
         try {
-          logger.info('🏅 Level 4: Deepgram Speech-to-Text API...');
-          const transcript = await this.transcribeWithDeepgram(url, videoId, deepgramApiKey);
+          logger.info('🏅 Level 4: Deepgram Speech-to-Text (URL-based)...');
+          const transcript = await this.transcribeWithDeepgramUrl(url, videoId, deepgramApiKey);
           if (transcript && transcript.length > 100) {
             logger.info('✅ SUCCESS: Deepgram API');
             this.transcriptCache.set(videoId, transcript);
@@ -123,13 +105,13 @@ class TranscriptionService {
       }
 
       // ============================================
-      // LEVEL 5: @xenova/transformers (Local Whisper)
+      // LEVEL 5: Try alternate caption languages
       // ============================================
       try {
-        logger.info('🎖️ Level 5: Local Whisper (@xenova/transformers)...');
-        const transcript = await this.transcribeWithLocalWhisper(url, videoId);
+        logger.info('🎖️ Level 5: Trying alternate languages...');
+        const transcript = await this.getAlternateLanguageTranscript(videoId);
         if (transcript && transcript.length > 100) {
-          logger.info('✅ SUCCESS: Local Whisper');
+          logger.info('✅ SUCCESS: Alternate language transcript');
           this.transcriptCache.set(videoId, transcript);
           return transcript;
         }
@@ -138,7 +120,7 @@ class TranscriptionService {
       }
 
       // All methods failed
-      logger.error('❌ All 5 transcription methods failed');
+      logger.error('❌ All transcription methods failed');
       return this.generateHonestResponse();
 
     } catch (error) {
@@ -172,20 +154,35 @@ class TranscriptionService {
   // LEVEL 1: youtube-transcript npm package
   // ============================================
   async getYouTubeTranscriptNpm(videoId) {
-    const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, {
-      lang: 'en',
-      country: 'US'
-    });
+    // Try multiple language configurations
+    const configs = [
+      { lang: 'en' },
+      { lang: 'en-US' },
+      { lang: 'en-GB' },
+      {}  // default/auto
+    ];
 
-    if (!transcriptArray || transcriptArray.length === 0) {
-      throw new Error('No transcript from youtube-transcript package');
+    for (const config of configs) {
+      try {
+        const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, config);
+
+        if (transcriptArray && transcriptArray.length > 0) {
+          const transcriptText = transcriptArray
+            .map(item => item.text)
+            .join(' ');
+
+          const decoded = this.decodeHtmlEntities(transcriptText);
+          if (decoded.length > 100) {
+            return decoded;
+          }
+        }
+      } catch (e) {
+        // Try next config
+        continue;
+      }
     }
 
-    const transcriptText = transcriptArray
-      .map(item => item.text)
-      .join(' ');
-
-    return this.decodeHtmlEntities(transcriptText);
+    throw new Error('No transcript from youtube-transcript package');
   }
 
   // ============================================
@@ -278,8 +275,9 @@ class TranscriptionService {
     return new Promise((resolve, reject) => {
       https.get(videoUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept-Language': 'en-US,en;q=0.9'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         },
         timeout: 20000
       }, (res) => {
@@ -287,7 +285,7 @@ class TranscriptionService {
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', async () => {
           try {
-            // Try to find caption track URL
+            // Method 1: Try to find caption track URL directly
             const captionUrlMatch = data.match(/"captionTracks":\s*\[\s*\{[^}]*"baseUrl":\s*"([^"]+)"/);
 
             if (captionUrlMatch) {
@@ -299,25 +297,41 @@ class TranscriptionService {
               }
             }
 
-            // Try ytInitialPlayerResponse
+            // Method 2: Try ytInitialPlayerResponse
             const playerMatch = data.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
             if (playerMatch) {
-              const playerData = JSON.parse(playerMatch[1]);
-              const captions = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
+              try {
+                const playerData = JSON.parse(playerMatch[1]);
+                const captions = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
 
-              if (captions && captions.length > 0) {
-                const englishCaption = captions.find(c => c.languageCode?.startsWith('en')) || captions[0];
-                if (englishCaption?.baseUrl) {
-                  const transcript = await this.fetchCaptionXml(englishCaption.baseUrl);
-                  if (transcript && transcript.length > 100) {
-                    resolve(transcript);
-                    return;
+                if (captions && captions.length > 0) {
+                  // Try English first, then any available language
+                  const sortedCaptions = [...captions].sort((a, b) => {
+                    const aIsEn = a.languageCode?.startsWith('en') ? 0 : 1;
+                    const bIsEn = b.languageCode?.startsWith('en') ? 0 : 1;
+                    return aIsEn - bIsEn;
+                  });
+
+                  for (const caption of sortedCaptions) {
+                    if (caption?.baseUrl) {
+                      try {
+                        const transcript = await this.fetchCaptionXml(caption.baseUrl);
+                        if (transcript && transcript.length > 100) {
+                          resolve(transcript);
+                          return;
+                        }
+                      } catch (e) {
+                        continue;
+                      }
+                    }
                   }
                 }
+              } catch (parseErr) {
+                logger.warn(`Player response parse error: ${parseErr.message}`);
               }
             }
 
-            reject(new Error('No caption tracks found'));
+            reject(new Error('No caption tracks found in page'));
           } catch (e) {
             reject(e);
           }
@@ -354,84 +368,34 @@ class TranscriptionService {
   }
 
   // ============================================
-  // LEVEL 4: Deepgram API
+  // LEVEL 4: Deepgram with URL-based transcription
+  // This uses Deepgram's ability to transcribe from a URL
   // ============================================
-  async transcribeWithDeepgram(url, videoId, apiKey) {
-    logger.info('📥 Downloading audio for Deepgram...');
+  async transcribeWithDeepgramUrl(youtubeUrl, videoId, apiKey) {
+    // First, try to get an audio stream URL from YouTube
+    const audioUrl = await this.getYouTubeAudioUrl(videoId);
 
-    // Download audio first
-    const audioPath = await this.downloadAudioWithYtdl(url, videoId);
-
-    if (!audioPath || !fs.existsSync(audioPath)) {
-      throw new Error('Failed to download audio');
+    if (!audioUrl) {
+      throw new Error('Could not get audio URL for Deepgram');
     }
 
-    logger.info(`🎵 Audio downloaded: ${audioPath}`);
-    logger.info('📤 Sending to Deepgram...');
+    logger.info('🎵 Got audio URL, sending to Deepgram...');
 
-    try {
-      const audioBuffer = fs.readFileSync(audioPath);
-      const transcript = await this.callDeepgramApi(audioBuffer, apiKey);
-
-      // Cleanup
-      this.cleanupFile(audioPath);
-
-      return transcript;
-    } catch (error) {
-      this.cleanupFile(audioPath);
-      throw error;
-    }
-  }
-
-  async downloadAudioWithYtdl(url, videoId) {
     return new Promise((resolve, reject) => {
-      try {
-        const ytdl = require('ytdl-core');
-        const audioPath = path.join(this.tempDir, `${videoId}_${Date.now()}.mp3`);
-        const writeStream = fs.createWriteStream(audioPath);
+      const postData = JSON.stringify({
+        url: audioUrl
+      });
 
-        const timeout = setTimeout(() => {
-          writeStream.destroy();
-          reject(new Error('Audio download timeout (60s)'));
-        }, 60000);
-
-        ytdl(url, {
-          quality: 'lowestaudio',
-          filter: 'audioonly'
-        })
-          .on('error', (err) => {
-            clearTimeout(timeout);
-            reject(err);
-          })
-          .pipe(writeStream)
-          .on('finish', () => {
-            clearTimeout(timeout);
-            logger.info(`✅ Audio saved: ${audioPath}`);
-            resolve(audioPath);
-          })
-          .on('error', (err) => {
-            clearTimeout(timeout);
-            reject(err);
-          });
-
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  async callDeepgramApi(audioBuffer, apiKey) {
-    return new Promise((resolve, reject) => {
       const options = {
         hostname: 'api.deepgram.com',
-        path: '/v1/listen?model=nova-2&smart_format=true&language=en',
+        path: '/v1/listen?model=nova-2&smart_format=true&language=en&punctuate=true',
         method: 'POST',
         headers: {
           'Authorization': `Token ${apiKey}`,
-          'Content-Type': 'audio/mp3',
-          'Content-Length': audioBuffer.length
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
         },
-        timeout: 120000
+        timeout: 180000  // 3 minutes for longer videos
       };
 
       const req = https.request(options, (res) => {
@@ -440,7 +404,7 @@ class TranscriptionService {
         res.on('end', () => {
           try {
             if (res.statusCode !== 200) {
-              throw new Error(`Deepgram returned ${res.statusCode}: ${data}`);
+              throw new Error(`Deepgram returned ${res.statusCode}: ${data.substring(0, 200)}`);
             }
 
             const result = JSON.parse(data);
@@ -459,75 +423,95 @@ class TranscriptionService {
 
       req.on('error', reject);
       req.on('timeout', () => { req.destroy(); reject(new Error('Deepgram timeout')); });
-      req.write(audioBuffer);
+      req.write(postData);
       req.end();
     });
   }
 
-  // ============================================
-  // LEVEL 5: @xenova/transformers (Local Whisper)
-  // ============================================
-  async transcribeWithLocalWhisper(url, videoId) {
-    logger.info('🔧 Starting local Whisper transcription...');
+  // Get YouTube audio stream URL
+  async getYouTubeAudioUrl(videoId) {
+    return new Promise((resolve, reject) => {
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
-    // Initialize transformers
-    const loaded = await this.initializeTransformers();
-    if (!loaded) {
-      throw new Error('@xenova/transformers not available');
-    }
+      https.get(videoUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        timeout: 15000
+      }, (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try {
+            // Extract player response
+            const playerMatch = data.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
+            if (!playerMatch) {
+              throw new Error('Could not find player response');
+            }
 
-    // Download audio
-    logger.info('📥 Downloading audio for local Whisper...');
-    const audioPath = await this.downloadAudioWithYtdl(url, videoId);
+            const playerData = JSON.parse(playerMatch[1]);
+            const formats = playerData?.streamingData?.adaptiveFormats || [];
 
-    if (!audioPath || !fs.existsSync(audioPath)) {
-      throw new Error('Failed to download audio for Whisper');
-    }
+            // Find audio-only format
+            const audioFormats = formats.filter(f =>
+              f.mimeType?.includes('audio') && f.url
+            );
 
-    try {
-      logger.info('🎤 Running Whisper model (this may take a few minutes)...');
+            if (audioFormats.length > 0) {
+              // Sort by bitrate (lower is faster to process)
+              audioFormats.sort((a, b) => (a.bitrate || 0) - (b.bitrate || 0));
+              resolve(audioFormats[0].url);
+              return;
+            }
 
-      // Use whisper-tiny for fastest processing
-      const { pipeline } = this.transformers;
+            // No direct URL, try signatureCipher
+            const cipherFormats = formats.filter(f =>
+              f.mimeType?.includes('audio') && f.signatureCipher
+            );
 
-      if (!this.whisperPipeline) {
-        logger.info('📦 Loading Whisper model (first time is slow)...');
-        this.whisperPipeline = await pipeline(
-          'automatic-speech-recognition',
-          'Xenova/whisper-tiny.en',
-          {
-            quantized: true,
-            revision: 'main'
+            if (cipherFormats.length > 0) {
+              // Can't decode cipher without additional work
+              logger.warn('Audio URL is encrypted with signature cipher');
+            }
+
+            throw new Error('No accessible audio format found');
+          } catch (e) {
+            reject(e);
           }
-        );
-        logger.info('✅ Whisper model loaded');
+        });
+      }).on('error', reject)
+        .on('timeout', function () { this.destroy(); reject(new Error('Audio URL timeout')); });
+    });
+  }
+
+  // ============================================
+  // LEVEL 5: Try alternate language transcripts
+  // ============================================
+  async getAlternateLanguageTranscript(videoId) {
+    const languages = ['en', 'en-US', 'en-GB', 'es', 'fr', 'de', 'pt', 'hi', 'ja', 'ko', 'auto'];
+
+    for (const lang of languages) {
+      try {
+        const transcriptArray = await YoutubeTranscript.fetchTranscript(videoId, { lang });
+
+        if (transcriptArray && transcriptArray.length > 0) {
+          const transcriptText = transcriptArray
+            .map(item => item.text)
+            .join(' ');
+
+          const decoded = this.decodeHtmlEntities(transcriptText);
+          if (decoded.length > 100) {
+            logger.info(`Found transcript in language: ${lang}`);
+            return decoded;
+          }
+        }
+      } catch (e) {
+        continue;
       }
-
-      // Read audio file
-      const audioBuffer = fs.readFileSync(audioPath);
-
-      // Transcribe
-      const result = await this.whisperPipeline(audioBuffer, {
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        return_timestamps: false
-      });
-
-      // Cleanup
-      this.cleanupFile(audioPath);
-
-      const transcript = result?.text || '';
-
-      if (transcript.length < 50) {
-        throw new Error('Local Whisper returned empty transcript');
-      }
-
-      return transcript;
-
-    } catch (error) {
-      this.cleanupFile(audioPath);
-      throw error;
     }
+
+    throw new Error('No transcript in any language');
   }
 
   // ============================================
@@ -545,31 +529,6 @@ class TranscriptionService {
     }
   }
 
-  // Legacy method for backward compatibility
-  async transcribeAudio(audioPath) {
-    logger.warn('Direct audio transcription called - using local Whisper');
-
-    const loaded = await this.initializeTransformers();
-    if (!loaded) {
-      throw new Error('@xenova/transformers not available');
-    }
-
-    const { pipeline } = this.transformers;
-
-    if (!this.whisperPipeline) {
-      this.whisperPipeline = await pipeline(
-        'automatic-speech-recognition',
-        'Xenova/whisper-tiny.en',
-        { quantized: true }
-      );
-    }
-
-    const audioBuffer = fs.readFileSync(audioPath);
-    const result = await this.whisperPipeline(audioBuffer);
-
-    return result?.text || '';
-  }
-
   generateHonestResponse() {
     return `TRANSCRIPT NOT AVAILABLE
 
@@ -578,12 +537,12 @@ We tried 5 different methods to get the transcript for this video:
 2. ✗ YouTube Innertube API  
 3. ✗ Web Scraping/Caption Tracks
 4. ✗ Deepgram Speech-to-Text
-5. ✗ Local Whisper AI
+5. ✗ Alternate Language Search
 
 POSSIBLE REASONS:
 • Video has no captions enabled
 • Video is private or age-restricted
-• Audio could not be processed
+• Audio stream is encrypted
 • Regional restrictions apply
 
 WHAT TO DO:
