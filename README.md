@@ -216,7 +216,8 @@ Smart-Summary-QA/
 │   │   ├── utils/               # Utility functions
 │   │   ├── App.js               # Main App component
 │   │   └── index.js             # Entry point
-│   ├── .env.example             # Environment variables template
+│   ├── .env.example             # Environment template
+│   ├── .env.production          # Production environment
 │   ├── package.json             # Frontend dependencies
 │   └── README.md                # Frontend documentation
 │
@@ -230,41 +231,29 @@ Smart-Summary-QA/
 │   │   ├── videoService.js     # Video processing logic
 │   │   ├── pdfService.js       # PDF processing logic
 │   │   ├── qaService.js        # Q&A logic
-│   │   └── transcriptService.js # Transcript extraction
+│   │   ├── transcriptionService.js # 5-Level Fallback Transcription
+│   │   └── summarizationService.js # AI Summarization
+│   ├── scripts/                 # Python helper scripts
+│   │   ├── download_audio.py   # Audio download script
+│   │   └── transcribe_audio.py # Whisper transcription
 │   ├── utils/                   # Helper functions
-│   │   ├── errorHandler.js     # Error handling
-│   │   └── validators.js       # Input validation
+│   │   └── errorHandler.js     # Error handling
 │   ├── test/                    # Test files
-│   │   ├── api.test.js         # API endpoint tests
-│   │   └── services.test.js    # Service layer tests
-│   ├── uploads/                 # Temporary file storage
-│   ├── temp/                    # Temporary processing files
-│   ├── .env.example             # Environment variables template
+│   ├── .env.example             # Environment template
 │   ├── server.js                # Express server entry point
 │   ├── package.json             # Backend dependencies
-│   ├── requirements.txt         # Python dependencies
 │   └── README.md                # Backend documentation
 │
 ├── docs/                         # Documentation & Screenshots
-│   ├── Dashboard.png            # Dashboard screenshot
-│   ├── Dark mode.png            # Dark mode screenshot
+│   ├── Dashboard.png
+│   ├── Dark mode.png
 │   ├── Video Processing Single.png
 │   ├── Video Processing Multi.png
 │   ├── PDF Processor.png
 │   └── Q&A Assistant.png
 │
-├── scripts/                      # Utility scripts
-│   └── deployment scripts
-│
 ├── .gitignore                    # Git ignore rules
-├── package.json                  # Root package file
-├── README.md                     # This file
-├── start-dev.js                  # Development startup script
-├── start-simple.js               # Simple startup script
-├── start-local.bat               # Windows startup script
-├── start-local-dev.bat           # Windows dev script
-├── start-local-dev.sh            # Unix dev script
-└── deploy.js                     # Deployment script
+└── README.md                     # This file
 ```
 
 ---
