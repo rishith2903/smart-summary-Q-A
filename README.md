@@ -28,6 +28,46 @@ The project integrates **OpenAI's Whisper AI** for audio transcription, **Xenova
 
 ---
 
+## 📊 Project Statistics
+
+<table align="center">
+<tr>
+<td align="center"><b>🔌 8</b><br/>REST API Endpoints</td>
+<td align="center"><b>🧩 6</b><br/>Backend Services</td>
+<td align="center"><b>🧪 130+</b><br/>Unit Tests</td>
+<td align="center"><b>🔄 5</b><br/>Fallback Levels</td>
+</tr>
+<tr>
+<td align="center"><b>⚛️ 7</b><br/>React Components</td>
+<td align="center"><b>📄 6</b><br/>Pages</td>
+<td align="center"><b>🌐 99+</b><br/>Languages Supported</td>
+<td align="center"><b>⏱️ 100%</b><br/>Uptime Target</td>
+</tr>
+</table>
+
+### 📈 Detailed Metrics
+
+| Category | Metric | Value |
+|----------|--------|-------|
+| **Backend** | Total API Endpoints | 8 |
+| | Core Services | 6 (Video, PDF, Q&A, Transcription, Summarization, Translation) |
+| | Route Files | 4 (video, pdf, qa, health) |
+| | Utility Modules | 2 |
+| **Frontend** | React Components | 7 |
+| | Page Components | 6 |
+| | Service Modules | 1 |
+| **Testing** | Test Files | 8 |
+| | Unit Tests | 130+ |
+| | Test Coverage Target | 80%+ |
+| **AI/ML** | Transcription Methods | 5 (Fallback System) |
+| | NLP Models | 3 (Whisper, BART, RoBERTa) |
+| | Supported Languages | 99+ |
+| **Performance** | Max File Size | 10 MB |
+| | Max Video Duration | 60 min |
+| | Concurrent Processing | 4 videos |
+
+---
+
 ## 📸 Screenshots
 
 ### Dashboard
